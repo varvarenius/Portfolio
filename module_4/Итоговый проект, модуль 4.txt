@@ -208,7 +208,6 @@ SELECT DISTINCT f.flight_id,
                 model,
                 range,
                 status,
-                count(distinct s.seat_no) AS total_seats,
                 sum(amount) AS total_paid,
                 case when s.fare_conditions = 'Business' then count(distinct s.seat_no)
                 when s.fare_conditions = 'Economy' then count(distinct s.seat_no) end as business_economy_seats
@@ -243,5 +242,4 @@ GROUP BY f.flight_id,
 ORDER BY total_paid DESC,
          diff_arrival DESC,
          time_actual DESC,
-         diff_departure DESC,
-         total_seats DESC;
+         diff_departure DESC;
