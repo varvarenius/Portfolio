@@ -183,31 +183,16 @@ GROUP BY f.model;
 
 Проект
 
-SELECT 
-s1.aircraft_code,
-count(distinct s1.seat_no) Business_seats,
-count(distinct s2.seat_no) Economy_seats
-FROM dst_project.seats s1
-    JOIN (
-            SELECT 
-            aircraft_code,
-            seat_no 
-            FROM dst_project.seats
-            WHERE fare_conditions = 'Economy'
-                          ) s2 on s1.aircraft_code = s2.aircraft_code
-WHERE s1.fare_conditions = 'Business'
-GROUP BY 1
-
 SELECT DISTINCT f.flight_id,
                 flight_no,
                 scheduled_arrival,
                 scheduled_departure,
                 departure_airport,
                 a.city AS city_departure,
-                a.airport_name,
+                a.airport_name as airport_departure,
                 arrival_airport,
-                aa.city,
-                aa.airport_name,
+                aa.city as city_arrival,
+                aa.airport_name as airport_arrival,
                 round(avg(extract(epoch
                                   FROM (actual_departure - scheduled_departure))) / 60) AS diff_departure,
                 round(avg(extract(epoch
@@ -219,10 +204,12 @@ SELECT DISTINCT f.flight_id,
                 s.fare_conditions,
                 a.timezone,
                 model,
-                range,
+                RANGE,
                 status,
-                count(s.seat_no) AS total_seats,
-                sum(amount) AS total_paid
+                count(distinct s.seat_no) AS total_seats,
+                sum(amount) AS total_paid,
+                case when s.fare_conditions = 'Business' then count(distinct s.seat_no)
+                when s.fare_conditions = 'Economy' then count(distinct s.seat_no) end as business_economy_seats
 FROM dst_project.flights f
 LEFT JOIN dst_project.seats s ON f.aircraft_code = s.aircraft_code
 LEFT JOIN dst_project.airports a ON f.departure_airport = a.airport_code
@@ -247,7 +234,7 @@ GROUP BY f.flight_id,
          s.fare_conditions,
          a.timezone,
          model,
-         range,
+         RANGE,
          status
 ORDER BY total_paid DESC,
          diff_arrival DESC,
